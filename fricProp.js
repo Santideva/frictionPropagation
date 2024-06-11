@@ -68,7 +68,7 @@ function propagateChanges(queue, probability, originX, originY) {
                 child.y >= 0 &&
                 child.y < height
             ) {
-                const newColor = interpolateColor(startColor, endColor, iteration / 1000);
+                const newColor = interpolateColor(startColor, endColor, iteration / 200);
                 const distance = Math.sqrt(Math.pow(child.x - originX, 2) + Math.pow(child.y - originY, 2));
                 const alpha = Math.max(1 - (distance / (width / 2)), 0); // Decrease alpha with distance
                 activePixels.set(key, {
@@ -123,7 +123,7 @@ function updateAndDrawPixels() {
 function startPropagation(x, y, numPropagations) {
     const initialProbability = 100;
     const seedCount = 9; // Number of initial seeds
-    const radius = 27; // Radius for random seed points
+    const radius = 25   ; // Radius for random seed points
     const initialSeeds = [];
 
     for (let i = 0; i < seedCount; i++) {
@@ -160,5 +160,42 @@ canvas.addEventListener('click', (event) => {
     const y = event.clientY - rect.top;
 
     startPropagation(x, y, numPropagations);
-    numPropagations = Math.pow(numPropagations, 2); // Scale the number of propagations
+    numPropagations = Math.pow(numPropagations, 100); // Scale the number of propagations
+});
+
+function generateRandomColor() {
+    return {
+        r: Math.floor(Math.random() * 256),
+        g: Math.floor(Math.random() * 256),
+        b: Math.floor(Math.random() * 256)
+    };
+}
+
+function adjustColor(baseColor, adjustFactor) {
+    return {
+        r: Math.min(255, Math.max(0, baseColor.r + adjustFactor)),
+        g: Math.min(255, Math.max(0, baseColor.g + adjustFactor)),
+        b: Math.min(255, Math.max(0, baseColor.b + adjustFactor))
+    };
+}
+
+function randomizeColors() {
+    const baseColor = generateRandomColor();
+    const adjustFactor1 = -76; // Difference between canvas bg and start color
+    const adjustFactor2 = 61; // Difference between start color and end color
+    
+    canvas.style.backgroundColor = rgbToString(baseColor);
+
+    startColor = adjustColor(baseColor, adjustFactor1);
+    endColor = adjustColor(startColor, adjustFactor2);
+}
+
+function applyNewColors() {
+    ctx.fillStyle = canvas.style.backgroundColor;
+    ctx.fillRect(0, 0, width, height); // Clear the canvas with the new background color
+}
+
+document.getElementById('randomizeColors').addEventListener('click', () => {
+    randomizeColors();
+    applyNewColors();
 });
