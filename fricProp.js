@@ -2,7 +2,7 @@ const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 const width = canvas.width;
 const height = canvas.height;
-const pixelSize = 2; // Smaller pixel size for better visual experience
+const pixelSize = 1;
 
 class Deque {
     constructor() {
@@ -33,13 +33,13 @@ function interpolateColor(startColor, endColor, factor) {
     return { r, g, b };
 }
 
-const fadeOutRate = 0.01; // Rate at which pixels fade out
+const fadeOutRate = 0.01;
 let totalIterations = 0;
-const activePixels = new Map(); // Store active pixels
-const propagations = []; // Store active propagations
+const activePixels = new Map();
+const propagations = [];
 
-const startColor = { r: 21, g: 95, b: 120 }; // Start color
-const endColor = { r: 158, g: 151, b: 117 }; // End color
+const startColor = { r: 21, g: 95, b: 120 };
+const endColor = { r: 158, g: 151, b: 117 };
 
 function drawPixel(x, y, color) {
     ctx.fillStyle = rgbToString(color);
@@ -68,9 +68,9 @@ function propagateChanges(queue, probability, originX, originY) {
                 child.y >= 0 &&
                 child.y < height
             ) {
-                const newColor = interpolateColor(startColor, endColor, iteration / 200);
+                const newColor = interpolateColor(startColor, endColor, iteration / 100);
                 const distance = Math.sqrt(Math.pow(child.x - originX, 2) + Math.pow(child.y - originY, 2));
-                const alpha = Math.max(1 - (distance / (width / 2)), 0); // Decrease alpha with distance
+                const alpha = Math.max(1 - (distance / (width / 2)), 0);
                 activePixels.set(key, {
                     currentColor: parentColor,
                     targetColor: newColor,
@@ -94,10 +94,10 @@ function outwardPropagation(parents, initialProbability, originX, originY) {
         if (queue.length === 0) return;
 
         queue = propagateChanges(queue, probability, originX, originY);
-        probability *= 0.98; // Decrease probability for the next iteration more rapidly
+        probability *= 0.98;
         totalIterations++;
 
-        updateAndDrawPixels(); // Update and draw all active pixels
+        updateAndDrawPixels();
         requestAnimationFrame(propagate);
     }
 
@@ -112,7 +112,7 @@ function updateAndDrawPixels() {
         drawPixel(parseInt(key.split(',')[0]), parseInt(key.split(',')[1]), { ...newColor, a: adjustedAlpha });
 
         if (adjustedAlpha <= 0) {
-            activePixels.delete(key); // Remove faded-out pixels
+            activePixels.delete(key);
         } else {
             pixel.currentColor = newColor;
             pixel.age += 1;
@@ -122,8 +122,8 @@ function updateAndDrawPixels() {
 
 function startPropagation(x, y, numPropagations) {
     const initialProbability = 100;
-    const seedCount = 9; // Number of initial seeds
-    const radius = 25   ; // Radius for random seed points
+    const seedCount = 1;
+    const radius = 1;
     const initialSeeds = [];
 
     for (let i = 0; i < seedCount; i++) {
@@ -138,7 +138,7 @@ function startPropagation(x, y, numPropagations) {
         const key = `${seedX},${seedY}`;
         activePixels.set(key, {
             currentColor: initialPixel.color,
-            targetColor: interpolateColor(startColor, endColor, 0.1),
+            targetColor: interpolateColor(startColor, endColor, 0.4),
             age: 0,
             iteration: 0,
             alpha: 1
@@ -152,7 +152,7 @@ function startPropagation(x, y, numPropagations) {
     }
 }
 
-let numPropagations = 1; // Initial number of propagations
+let numPropagations = 1;
 
 canvas.addEventListener('click', (event) => {
     const rect = canvas.getBoundingClientRect();
@@ -160,7 +160,7 @@ canvas.addEventListener('click', (event) => {
     const y = event.clientY - rect.top;
 
     startPropagation(x, y, numPropagations);
-    numPropagations = Math.pow(numPropagations, 100); // Scale the number of propagations
+    numPropagations = Math.min(numPropagations * 2, 16); // Limit the number of propagations
 });
 
 function generateRandomColor() {
@@ -179,23 +179,14 @@ function adjustColor(baseColor, adjustFactor) {
     };
 }
 
-function randomizeColors() {
-    const baseColor = generateRandomColor();
-    const adjustFactor1 = -76; // Difference between canvas bg and start color
-    const adjustFactor2 = 61; // Difference between start color and end color
-    
-    canvas.style.backgroundColor = rgbToString(baseColor);
-
-    startColor = adjustColor(baseColor, adjustFactor1);
-    endColor = adjustColor(startColor, adjustFactor2);
+function changeBackgroundColor() {
+    const newBackgroundColor = generateRandomColor();
+    canvas.style.backgroundColor = rgbToString(newBackgroundColor);
+    ctx.fillStyle = rgbToString(newBackgroundColor);
+    ctx.fillRect(0, 0, width, height);
 }
 
-function applyNewColors() {
-    ctx.fillStyle = canvas.style.backgroundColor;
-    ctx.fillRect(0, 0, width, height); // Clear the canvas with the new background color
-}
-
-document.getElementById('randomizeColors').addEventListener('click', () => {
-    randomizeColors();
-    applyNewColors();
+document.getElementById('changeBackgroundColor').addEventListener('click', () => {
+    changeBackgroundColor();
 });
+
